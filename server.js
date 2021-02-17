@@ -3,9 +3,6 @@ const db = new Sequelize(
   process.env.DATABASE_URL || "postgres://localhost/acme-countryclub"
 );
 
-const express = require("express");
-const app = express();
-
 const Facilities = db.define("facility", {
   id: {
     type: DataTypes.UUID,
@@ -41,7 +38,7 @@ Bookings.belongsTo(Facilities);
 Facilities.hasMany(Bookings);
 
 Members.belongsTo(Members, { as: "sponsor" });
-Members.hasMany(Members, { foreignKey: "sponsorId" });
+Members.hasMany(Members, { foreignKey: "sponsorId", as: "members_sponsored" });
 
 const syncAndSeed = async () => {
   console.log("test");
@@ -82,9 +79,46 @@ const syncAndSeed = async () => {
 const run = async () => {
   try {
     await syncAndSeed();
+    const port = process.env.PORT || 1337;
+    await app.listen(port, () => console.log(`listening in port ${port}`));
   } catch (err) {
     console.log(err);
   }
 };
 
 run();
+
+const express = require("express");
+const app = express();
+const morgan = require("morgan");
+
+app.get("/api/facilities", async (req, res, next) => {
+  try {
+    const bookings = await Facilities.findAll({ include: Bookings });
+    res.send(bookings);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/bookings", async (req, res, next) => {
+  try {
+    const bookings = await Bookings.findAll({
+      include: [Facilities, Members],
+    });
+    res.send(bookings);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/members", async (req, res, next) => {
+  try {
+    const bookings = await Members.findAll({
+      include: [{ model: Members, as: "members_sponsored" }],
+    });
+    res.send(bookings);
+  } catch (err) {
+    next(err);
+  }
+});
