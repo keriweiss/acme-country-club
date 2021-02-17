@@ -76,18 +76,6 @@ const syncAndSeed = async () => {
   await Jane.save();
 };
 
-const run = async () => {
-  try {
-    await syncAndSeed();
-    const port = process.env.PORT || 1337;
-    await app.listen(port, () => console.log(`listening in port ${port}`));
-  } catch (err) {
-    console.log(err);
-  }
-};
-
-run();
-
 const express = require("express");
 const app = express();
 const morgan = require("morgan");
@@ -122,3 +110,15 @@ app.get("/api/members", async (req, res, next) => {
     next(err);
   }
 });
+
+const run = async () => {
+  try {
+    await syncAndSeed();
+    const port = process.env.PORT || 1337;
+    await app.listen(port, () => console.log(`listening in port ${port}`));
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+run();
